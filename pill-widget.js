@@ -43,10 +43,13 @@ function buildWidget(data) {
   sub.font = Font.systemFont(12);
   sub.textColor = C.muted;
 
-  if (data?.streak >= 2) {
-    w.addSpacer(10);
-    const streak = w.addText(`🔥 ${data.streak}-day streak`);
-    streak.font = Font.boldSystemFont(11);
+  if (taken) {
+    w.addSpacer();
+    const streakLabel = data.streak >= 2
+      ? `🔥 ${data.streak}-day streak`
+      : "Day 1 ✓";
+    const streak = w.addText(streakLabel);
+    streak.font = Font.boldSystemFont(12);
     streak.textColor = C.accent;
   }
 
