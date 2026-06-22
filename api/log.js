@@ -33,6 +33,9 @@ export default async function handler(req, res) {
   await redis.lpush(KEY_HISTORY, now);
   await redis.ltrim(KEY_HISTORY, 0, HISTORY_KEEP - 1);
 
+  const wantsBrowser = (req.headers.accept || "").includes("text/html");
+  if (wantsBrowser) return res.redirect(302, "/");
+
   return res.status(200).json({
     status: "logged",
     message: `Logged at ${timeStr(now)}. Nice.`,

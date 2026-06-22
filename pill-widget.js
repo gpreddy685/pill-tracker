@@ -1,15 +1,13 @@
-// ─── CONFIG — fill these in ───────────────────────────────────────────────────
-const API_URL = "https://pill-tracker-beta.vercel.app/"; // your Vercel URL, no trailing slash
-const SECRET  = "your-secret-here";            // your LOG_SECRET value
-// ─────────────────────────────────────────────────────────────────────────────
+const API_URL = "https://your-app.vercel.app";
+const SECRET  = "your-secret-here";
 
 const C = {
-  bg:       new Color("#FAF8F4"),
-  goodBg:   new Color("#E8F6EF"),
-  ink:      new Color("#1B1F1D"),
-  good:     new Color("#0E6B4C"),
-  muted:    new Color("#7A8079"),
-  accent:   new Color("#3D6B5C"),
+  bg:     new Color("#FAF8F4"),
+  goodBg: new Color("#E8F6EF"),
+  ink:    new Color("#1B1F1D"),
+  good:   new Color("#0E6B4C"),
+  muted:  new Color("#7A8079"),
+  accent: new Color("#3D6B5C"),
 };
 
 async function fetchStatus() {
@@ -24,16 +22,14 @@ function buildWidget(data) {
   const w = new ListWidget();
   w.backgroundColor = taken ? C.goodBg : C.bg;
   w.setPadding(14, 16, 14, 16);
-  w.url = API_URL; // tap widget → opens your app
+  w.url = API_URL;
 
-  // Label
   const label = w.addText("Levipil · 250 mg");
   label.font = Font.boldSystemFont(10);
   label.textColor = C.muted;
 
   w.addSpacer(10);
 
-  // Big status
   const statusText = w.addText(taken ? "✓  Taken" : "Not yet");
   statusText.font = Font.boldSystemFont(28);
   statusText.textColor = taken ? C.good : C.ink;
@@ -41,16 +37,12 @@ function buildWidget(data) {
 
   w.addSpacer(4);
 
-  // Sub-line
   const sub = w.addText(
-    taken
-      ? `Today at ${data.lastTakenLabel}`
-      : "No dose logged yet today"
+    taken ? `Today at ${data.lastTakenLabel}` : "No dose logged yet today"
   );
   sub.font = Font.systemFont(12);
   sub.textColor = C.muted;
 
-  // Streak badge (only when ≥ 2)
   if (data?.streak >= 2) {
     w.addSpacer(10);
     const streak = w.addText(`🔥 ${data.streak}-day streak`);
@@ -58,7 +50,6 @@ function buildWidget(data) {
     streak.textColor = C.accent;
   }
 
-  // Refresh every 15 min
   w.refreshAfterDate = new Date(Date.now() + 15 * 60 * 1000);
   return w;
 }
@@ -74,7 +65,6 @@ function errorWidget(message) {
   return w;
 }
 
-// ── Run ───────────────────────────────────────────────────────────────────────
 let widget;
 try {
   const data = await fetchStatus();
@@ -86,7 +76,6 @@ try {
 if (config.runsInWidget) {
   Script.setWidget(widget);
 } else {
-  // Preview in app while setting up
   await widget.presentSmall();
 }
 Script.complete();
