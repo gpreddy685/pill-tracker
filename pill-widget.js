@@ -22,7 +22,9 @@ function buildWidget(data) {
   const w = new ListWidget();
   w.backgroundColor = taken ? C.goodBg : C.bg;
   w.setPadding(14, 16, 14, 16);
-  w.url = API_URL;
+  w.url = taken
+    ? API_URL
+    : `${API_URL}/api/log?key=${encodeURIComponent(SECRET)}`;
 
   const label = w.addText("Levipil · 250 mg");
   label.font = Font.boldSystemFont(10);
