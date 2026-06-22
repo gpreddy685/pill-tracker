@@ -1,5 +1,5 @@
 // ─── CONFIG — fill these in ───────────────────────────────────────────────────
-const API_URL = "https://your-app.vercel.app"; // your Vercel URL, no trailing slash
+const API_URL = "https://pill-tracker-beta.vercel.app/"; // your Vercel URL, no trailing slash
 const SECRET  = "your-secret-here";            // your LOG_SECRET value
 // ─────────────────────────────────────────────────────────────────────────────
 
