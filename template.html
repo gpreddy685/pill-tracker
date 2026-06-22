@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FAF8F4">
+<title>Did I take it?</title>
+<style>
+  :root{
+    --bg:#FAF8F4; --card:#FFFFFF; --ink:#1B1F1D; --muted:#7A8079;
+    --line:#EAE6DC;
+    --good:#1F9E73; --good-deep:#0E6B4C; --good-bg:#E8F6EF; --good-line:#C9EBDA;
+    --wait-bg:#F1EFE8; --empty:#EDEAE2;
+    --warn:#C2670B; --warn-bg:#FBEEDB; --warn-ink:#7C3A06;
+    --accent:#3D6B5C;
+    --shadow:0 1px 2px rgba(27,31,29,.04), 0 10px 28px rgba(27,31,29,.07);
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex; flex-direction:column; align-items:center;
+    padding:clamp(18px,5vw,30px); padding-bottom:44px; min-height:100%;
+    position:relative; overflow-x:hidden;
+  }
+  body::before{ content:""; position:fixed; top:-120px; right:-100px; width:340px; height:340px;
+    background:radial-gradient(circle, rgba(31,158,115,.10), transparent 70%); pointer-events:none; z-index:0; }
+  body::after{ content:""; position:fixed; bottom:-140px; left:-110px; width:320px; height:320px;
+    background:radial-gradient(circle, rgba(61,107,92,.07), transparent 70%); pointer-events:none; z-index:0; }
+
+  .wrap{width:100%; max-width:420px; display:flex; flex-direction:column; gap:16px; position:relative; z-index:1}
+
+  header{display:flex; align-items:center; justify-content:space-between; padding:2px 2px 0}
+  .brand{display:flex; align-items:center; gap:10px}
+  .mark{width:30px; height:30px; flex:none}
+  .med{display:flex; flex-direction:column; line-height:1.15}
+  .med .name{font-size:15.5px; font-weight:680; letter-spacing:-.01em}
+  .med .dose{font-size:12px; color:var(--muted); font-weight:560; margin-top:1px}
+  .clock{font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+
+  .hero{ background:var(--card); border:1px solid var(--line); border-radius:24px; box-shadow:var(--shadow);
+    padding:30px 24px 24px; position:relative; overflow:hidden;
+    transition:background .3s ease, border-color .3s ease; animation:rise .5s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes rise{ from{opacity:0; transform:translateY(8px)} to{opacity:1; transform:none} }
+  .hero.good{background:var(--good-bg); border-color:var(--good-line)}
+
+  .eyebrow{ font-size:12px; font-weight:650; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--muted); display:flex; align-items:center; gap:8px; }
+  .pulse{width:7px; height:7px; border-radius:50%; background:var(--muted); flex:none}
+  .hero.good .pulse{background:var(--good)}
+  .hero.wait .pulse{animation:breathe 2.4s ease-in-out infinite}
+  @keyframes breathe{ 0%,100%{opacity:.4; transform:scale(.85)} 50%{opacity:1; transform:scale(1.15)} }
+
+  .status-row{margin-top:16px; display:flex; align-items:center; gap:14px; min-height:46px}
+  .status{font-size:clamp(28px,9.5vw,40px); line-height:1.05; font-weight:760; letter-spacing:-.03em}
+  .hero.good .status{color:var(--good-deep)}
+
+  .checkwrap{width:46px; height:46px; flex:none; opacity:0; transform:scale(.6); transition:opacity .3s, transform .3s}
+  .hero.good .checkwrap{opacity:1; transform:scale(1)}
+  .checkwrap svg{width:100%; height:100%}
+  .checkwrap circle{stroke:var(--good); stroke-width:2; fill:var(--good-bg)}
+  .checkwrap path{stroke:var(--good); stroke-width:2.6; fill:none; stroke-linecap:round; stroke-linejoin:round;
+    stroke-dasharray:20; stroke-dashoffset:20; animation:draw .45s ease .15s forwards;}
+  @keyframes draw{ to{stroke-dashoffset:0} }
+
+  .sub{margin-top:12px; font-size:15px; color:var(--muted); line-height:1.5; min-height:22px}
+  .sub b{color:var(--ink); font-weight:640}
+
+  .act{margin-top:22px}
+  button{font-family:inherit; cursor:pointer; border:none}
+  .take{ width:100%; padding:18px; border-radius:16px; font-size:17px; font-weight:680;
+    background:var(--ink); color:#fff; letter-spacing:-.01em;
+    transition:transform .08s ease, opacity .2s ease; box-shadow:0 6px 16px rgba(27,31,29,.18); }
+  .take:active{transform:scale(.98)}
+  .take:disabled{opacity:.55; box-shadow:none}
+  .take.secondary{background:transparent; color:var(--muted); font-weight:600; padding:12px; font-size:14px; box-shadow:none}
+  .take.secondary:hover{color:var(--ink)}
+
+  .streak{ display:flex; align-items:center; gap:6px; font-size:12px; font-weight:650; color:var(--accent);
+    background:rgba(61,107,92,.08); padding:5px 11px; border-radius:999px; align-self:flex-start; }
+
+  /* heatmap */
+  .heat-card{ background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); padding:18px 20px 20px; }
+  .heat-title{font-size:11.5px; font-weight:650; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:12px}
+  .heat-grid{ display:grid; grid-template-columns:repeat(10, 1fr); gap:5px; }
+  .heat-cell{ aspect-ratio:1; border-radius:4px; background:var(--empty); }
+  .heat-cell.filled{ background:var(--good); }
+  .heat-cell.today{ box-shadow:0 0 0 2px var(--ink); }
+  .heat-foot{display:flex; justify-content:space-between; margin-top:10px; font-size:11px; color:var(--muted)}
+
+  .history{background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); padding:6px 4px; overflow:hidden}
+  .htitle{font-size:11.5px; font-weight:650; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); padding:14px 18px 8px}
+  .row{display:flex; align-items:center; gap:14px; padding:12px 18px}
+  .row+.row{border-top:1px solid var(--line)}
+  .row .ic{ width:30px; height:30px; border-radius:9px; flex:none; display:grid; place-items:center;
+    background:var(--good-bg); color:var(--good); font-size:13px; font-weight:700; }
+  .row .day{font-size:14.5px; font-weight:610; letter-spacing:-.01em}
+  .row .when{margin-left:auto; font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+  .empty{padding:20px 18px; font-size:13.5px; color:var(--muted); line-height:1.5}
+
+  footer{font-size:11.5px; color:var(--muted); line-height:1.55; text-align:center; padding:6px 14px}
+
+  .scrim{position:fixed; inset:0; background:rgba(20,24,22,.45); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; padding:24px; z-index:10}
+  .scrim.on{display:flex; animation:fadein .2s ease}
+  @keyframes fadein{ from{opacity:0} to{opacity:1} }
+  .modal{ background:var(--card); border-radius:24px; max-width:360px; width:100%; padding:26px 24px;
+    box-shadow:0 24px 64px rgba(20,24,22,.3); border-top:5px solid var(--warn); animation:rise .25s cubic-bezier(.2,.8,.2,1) both; }
+  .modal .mh{display:flex; align-items:center; gap:10px; color:var(--warn-ink); font-weight:740; font-size:17px; letter-spacing:-.01em}
+  .modal p{margin-top:13px; font-size:15px; color:var(--ink); line-height:1.55}
+  .modal p b{color:var(--warn-ink)}
+  .mbtns{display:flex; flex-direction:column; gap:9px; margin-top:22px}
+  .mbtns .keep{background:var(--good); color:#fff; padding:16px; border-radius:14px; font-weight:680; font-size:16px; box-shadow:0 6px 16px rgba(31,158,115,.3)}
+  .mbtns .extra{background:transparent; color:var(--muted); padding:11px; font-weight:600; font-size:13.5px}
+
+  .toast{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(16px);
+    background:var(--ink); color:var(--bg); font-size:13.5px; font-weight:600; padding:11px 18px; border-radius:11px;
+    opacity:0; transition:opacity .25s, transform .25s; box-shadow:0 12px 30px rgba(0,0,0,.25); pointer-events:none; z-index:20; }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="13" width="26" height="11" rx="5.5" transform="rotate(-32 16 18.5)" fill="#1B1F1D"/>
+          <path d="M16 9.3 L23.2 20.5" stroke="#FAF8F4" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="med">
+          <span class="name">Levipil</span>
+          <span class="dose">250 mg · after dinner</span>
+        </div>
+      </div>
+      <div class="clock" id="clock"></div>
+    </header>
+
+    <section class="hero" id="hero">
+      <div class="eyebrow"><span class="pulse"></span><span>Today's dose</span></div>
+      <div class="status-row">
+        <div class="status" id="status">Checking…</div>
+        <div class="checkwrap">
+          <svg viewBox="0 0 46 46"><circle cx="23" cy="23" r="20"/><path d="M14 23.5 L20 29.5 L32 16.5"/></svg>
+        </div>
+      </div>
+      <div class="sub" id="sub"></div>
+      <div class="act" id="act"></div>
+    </section>
+
+    <div class="streak" id="streak" style="display:none"></div>
+
+    <section class="heat-card">
+      <div class="heat-title">Last 70 days</div>
+      <div class="heat-grid" id="heatgrid"></div>
+      <div class="heat-foot"><span id="heat-from"></span><span>today</span></div>
+    </section>
+
+    <section class="history" id="history"></section>
+
+    <footer>
+      A memory aid, not a medical device. Keep your Health app log or a backup,
+      and follow your doctor's instructions for Levipil.
+    </footer>
+  </div>
+
+  <div class="scrim" id="scrim">
+    <div class="modal">
+      <div class="mh">⚠︎ Hold on</div>
+      <p id="modal-text"></p>
+      <div class="mbtns">
+        <button class="keep" onclick="closeGuard()">No — I already took it</button>
+        <button class="extra" onclick="confirmExtra()">My doctor told me to take another</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/* ---------- CONFIG: your deployed backend ---------- */
+const API_BASE = "__API_BASE__";
+const SECRET   = "__SECRET__";
+/* Note: since this is a static page, this secret is visible to anyone who views
+   the page source. Fine for a private personal tool — not something to reuse if
+   this ever becomes a shared product. */
+/* ----------------------------------------------------- */
+
+const DAY_MS = 86400000;
+const dayKey = (ms) => new Date(Number(ms)).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+const fmtTime = (ms) => new Date(Number(ms)).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+function ago(ms){
+  const m = Math.round((Date.now() - Number(ms)) / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m/60), r = m%60;
+  return r ? `${h}h ${r}m ago` : `${h}h ago`;
+}
+function dayLabel(ms){
+  const k = dayKey(ms), today = dayKey(Date.now()), yest = dayKey(Date.now()-DAY_MS);
+  if (k === today) return "Today";
+  if (k === yest) return "Yesterday";
+  return new Date(Number(ms)).toLocaleDateString([], { weekday:"short", month:"short", day:"numeric" });
+}
+
+async function api(path, params={}){
+  const qs = new URLSearchParams({ key: SECRET, ...params }).toString();
+  const r = await fetch(`${API_BASE}/${path}?${qs}`);
+  return r.json();
+}
+
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(window.__tt);
+  window.__tt = setTimeout(()=> t.classList.remove("show"), 1700);
+}
+
+let pendingForce = false;
+function openGuard(message){
+  document.getElementById("modal-text").innerHTML = message;
+  document.getElementById("scrim").classList.add("on");
+}
+function closeGuard(){ document.getElementById("scrim").classList.remove("on"); }
+async function confirmExtra(){
+  closeGuard();
+  const r = await api("log", { force: "1" });
+  showToast(r.message || "Logged");
+  await loadStatus();
+}
+
+async function takeTapped(){
+  const r = await api("log");
+  if (r.status === "already_taken"){
+    openGuard(r.message);
+    return;
+  }
+  showToast(r.message || "Logged");
+  await loadStatus();
+}
+
+function renderHeatmap(history){
+  const days = new Set(history.map(dayKey));
+  const grid = document.getElementById("heatgrid");
+  grid.innerHTML = "";
+  const N = 70;
+  const cells = [];
+  for (let i = N-1; i >= 0; i--){
+    const ts = Date.now() - i*DAY_MS;
+    cells.push({ key: dayKey(ts), isToday: i===0 });
+  }
+  cells.forEach(c => {
+    const el = document.createElement("div");
+    el.className = "heat-cell" + (days.has(c.key) ? " filled" : "") + (c.isToday ? " today" : "");
+    grid.appendChild(el);
+  });
+  document.getElementById("heat-from").textContent =
+    new Date(Date.now() - (N-1)*DAY_MS).toLocaleDateString([], { month:"short", day:"numeric" });
+}
+
+function renderHistoryList(history){
+  const recent = history.slice(0, 7);
+  const h = document.getElementById("history");
+  h.innerHTML = `<div class="htitle">Recent doses</div>` + (
+    recent.length
+      ? recent.map(ts => `<div class="row"><div class="ic">✓</div><div class="day">${dayLabel(ts)}</div><div class="when">${fmtTime(ts)}</div></div>`).join("")
+      : `<div class="empty">No doses logged yet. Tap your sticker after dinner to start.</div>`
+  );
+}
+
+async function loadStatus(){
+  document.getElementById("clock").textContent =
+    new Date().toLocaleDateString([], { weekday:"short", month:"short", day:"numeric" });
+
+  let data;
+  try{
+    data = await api("status");
+  }catch(e){
+    document.getElementById("status").textContent = "Can't reach server";
+    document.getElementById("sub").textContent = "Check your connection and try again.";
+    return;
+  }
+
+  const hero = document.getElementById("hero");
+  const status = document.getElementById("status");
+  const sub = document.getElementById("sub");
+  const act = document.getElementById("act");
+  hero.classList.remove("good","wait");
+
+  if (data.takenToday){
+    hero.classList.add("good");
+    status.textContent = "Yes, you're good";
+    sub.innerHTML = `Taken at <b>${data.lastTakenLabel}</b> · ${ago(data.lastTaken)}. That's it for today.`;
+    act.innerHTML = `<button class="take secondary" onclick="takeTapped()">Log another dose</button>`;
+  }else{
+    hero.classList.add("wait");
+    status.textContent = "Not yet today";
+    sub.innerHTML = `No dose logged today. Taking it after dinner? Tap below to record it.`;
+    act.innerHTML = `<button class="take" onclick="takeTapped()">I'm taking it now</button>`;
+  }
+
+  const streakEl = document.getElementById("streak");
+  if (data.streak >= 2){ streakEl.style.display = "flex"; streakEl.innerHTML = `🔥 ${data.streak}-day streak`; }
+  else streakEl.style.display = "none";
+
+  renderHeatmap(data.history || []);
+  renderHistoryList(data.history || []);
+}
+
+loadStatus();
+setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>
